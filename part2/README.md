@@ -64,14 +64,15 @@ fget <path>
 my_ls <path>
 ```
 
-## Security Measures
+### Attacks/Bugs/Errors Defended against
 1. **Directory Traversal & Unauthorized Creation Restrictions**  
-   - `create_dir` ensures users cannot create directories unless they have write permissions in the parent directory. Additionally, it enforces `0755` permissions, preventing unauthorized modifications by non-owners.  
+   - `create_dir` ensures users cannot create directories unless they have write permissions in the parent directory.
 
 2. **Input Validation & Error Handling**  
    - The system ensures that:  
      - Invalid or non-existent paths return errors rather than failing silently.  
-     - Attempting to modify or read a file/directory without the necessary permissions results in an appropriate error message.  
+     - Attempting to modify or read a file/directory without the necessary permissions results in an appropriate error message.
+
 3. **Enforced Permission Isolation**  
    - Users must have appropriate ACL permissions to execute actions. For example:  
      - `my_ls` requires read (`r`) permission to list directory contents.  
