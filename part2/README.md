@@ -1,11 +1,11 @@
 # nss_assignment_1# Access Control Lists
 
 ## Description of System
-- `fake_root` operates with UID 0, simulating root privileges.
-- Each file/directory has its own ACL stored in Extended Attributes:
+- *ACL-Based Access Control* 
+   - The ACLShell operates in a restricted environment where each file and directory has an ACL stored in extended attributes. ACLs specify user permissions (read, write, execute) and are enforced at the shell level before executing any command.
 
-- The `Owner` and `User` fields store user IDs (UIDs).
-- If an ACL does not exist for a file/directory during a write operation (`setacl`, `fput`, `create_dir`), one is created with the owner assigned and stored.
+- * SetUID-Enabled Commands*
+   - Custom commands (fput, my_ls, fget, my_cd, create_dir, setacl, getacl) are implemented as individual binaries with the setuid bit enabled. These commands check user permissions using getuid(), verify ACLs, and enforce discretionary access control (DAC) if ACLs deny access.
 
 ## Assumptions
 - `my_cd` only goes further, not back.
