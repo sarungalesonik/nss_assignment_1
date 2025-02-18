@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
     execv(path_buf, args);
 
     // Changing the user id back to the original user if execv fails
-    if (seteuid(current_user) != 0) {
+    if (seteuid(orig_uid) != 0) {
         cerr << "seteuid failed: " << strerror(errno) << endl;
         return EXIT_FAILURE;
     }
