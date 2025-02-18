@@ -10,42 +10,42 @@ using namespace std;
 namespace fs = std::filesystem;
 
 int main(int argc, char* argv[]) {
-    string currentDir;
+    string targetDir;
     if (argc == 2) {
-        string dir = argv[1];
-        fs::path absPath = fs::absolute(dir);
-        if (!fs::exists(absPath) || !fs::is_directory(absPath)) {
-            cerr << "Error: " << absPath.string() << " is not a valid directory" << endl;
+        string directoryPath = argv[1];
+        fs::path absolutePath = fs::absolute(directoryPath);
+        if (!fs::exists(absolutePath) || !fs::is_directory(absolutePath)) {
+            cerr << "Invalid directory: " << absolutePath.string() << " is not a valid directory" << endl;
             return 1;
         }
-        currentDir = absPath.string();
+        targetDir = absolutePath.string();
     } else {
-        char cwd[1024];
-        if (getcwd(cwd, sizeof(cwd)) != nullptr) {
-            currentDir = fs::absolute(cwd).string();
+        char currentWorkingDir[1024];
+        if (getcwd(currentWorkingDir, sizeof(currentWorkingDir)) != nullptr) {
+            targetDir = fs::absolute(currentWorkingDir).string();
         } else {
-            cerr << "Error: Unable to retrieve current directory" << endl;
+            cerr << "Unable to retrieve current directory" << endl;
             return 1;
         }
     }
 
-    AccessController ac;
-    if (!ac.read_from_file(currentDir)) {
-        cerr << "Error: Could not load ACL for directory: " << currentDir << endl;
+    AccessController aclController;
+    if (!aclController.read_from_file(targetDir)) {
+        cerr << "Failed to load ACL for directory: " << targetDir << endl;
         return 1;
     }
 
-    if (!ac.has_permission(getuid(), 4)) {
-        cerr << "Error: You do not have read permission for directory: " << currentDir << endl;
+    if (!aclController.has_permission(getuid(), 4)) {
+        cerr << "Permission denied: You do not have read access to directory: " << targetDir << endl;
         return 1;
     }
 
     try {
-        for (const auto& entry : fs::directory_iterator(currentDir)) {
+        for (const auto& entry : fs::directory_iterator(targetDir)) {
             cout << entry.path().filename().string() << endl;
         }
-    } catch (const fs::filesystem_error& err) {
-        cerr << "Error: Unable to list directory contents: " << err.what() << endl;
+    } catch (const fs::filesystem_error& error) {
+        cerr << "Error: Unable to list directory contents: " << error.what() << endl;
         return 1;
     }
 

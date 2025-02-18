@@ -9,45 +9,45 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        cerr << "Usage: " << argv[0] << " <target>" << endl;
+        cerr << "Usage: " << argv[0] << " <target_path>" << endl;
         return 1;
     }
 
-    string target = argv[1];
-    filesystem::path targetPath = filesystem::absolute(target);
+    string targetPathString = argv[1];
+    filesystem::path absoluteTargetPath = filesystem::absolute(targetPathString);
 
-    if (!filesystem::exists(targetPath)) {
-        cerr << "Error: " << targetPath.string() << " does not exist" << endl;
+    if (!filesystem::exists(absoluteTargetPath)) {
+        cerr << "Invalid path: " << absoluteTargetPath.string() << " does not exist" << endl;
         return 1;
     }
 
-    uid_t targetOwner = Funs::getFileOwnerUID(target);
-    if (seteuid(targetOwner) < 0) {
-        cerr << "Error: Could not change to owner of " << targetPath.string() << endl;
+    uid_t fileOwnerUID = Funs::getFileOwnerUID(targetPathString);
+    if (seteuid(fileOwnerUID) < 0) {
+        cerr << "Unable to switch to the owner of: " << absoluteTargetPath.string() << endl;
         return 1;
     }
 
-    AccessController ac;
-    bool aclLoaded = ac.read_from_file(target);
+    AccessController aclController;
+    bool aclLoaded = aclController.read_from_file(targetPathString);
     if (aclLoaded) {
-        if (!ac.has_permission(getuid(), 4)) {
-            cerr << "Error: You do not have read permission for " << targetPath.string() << endl;
+        if (!aclController.has_permission(getuid(), 4)) {
+            cerr << "Permission denied: You do not have read access to " << absoluteTargetPath.string() << endl;
             seteuid(getuid());
             return 1;
         }
     } else {
-        if (getuid() != targetOwner) {
-            cerr << "Error: No ACL present and you are not the owner of " << targetPath.string() << endl;
+        if (getuid() != fileOwnerUID) {
+            cerr << "No ACL found and you are not the owner of: " << absoluteTargetPath.string() << endl;
             seteuid(getuid());
             return 1;
         }
     }
 
     if (seteuid(getuid()) < 0) {
-        cerr << "Error: Could not revert effective UID" << endl;
+        cerr << "Failed to revert to the original user" << endl;
         return 1;
     }
 
-    cout << "You have valid read permission for " << targetPath.string() << endl;
+    cout << "You have valid read permission for: " << absoluteTargetPath.string() << endl;
     return 0;
 }

@@ -11,21 +11,21 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-bool createDirectoryAndSaveACL(const string &dirName) {
+bool createDirAndSaveACL(const string &dirName) {
     if (mkdir(dirName.c_str(), 0755) == -1) {
-        cerr << "Error: " << strerror(errno) << endl;
+        cerr << "Failed to create directory: " << strerror(errno) << endl;
         return false;
     }
 
-    AccessController aclCtrl;
-    aclCtrl.define_owner(getuid());
-    aclCtrl.grant_access(getuid(), 7);
-    if (!aclCtrl.write_to_file(dirName)) {
-        cerr << "Error: Could not save ACL for " << dirName << endl;
+    AccessController aclController;
+    aclController.define_owner(getuid());
+    aclController.grant_access(getuid(), 7);
+    if (!aclController.write_to_file(dirName)) {
+        cerr << "Failed to save ACL for directory: " << dirName << endl;
         return false;
     }
 
-    cout << "Directory created successfully: " << dirName << endl;
+    cout << "Directory successfully created: " << dirName << endl;
     return true;
 }
 
@@ -35,49 +35,49 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    string newDir = argv[1];
+    string newDirectory = argv[1];
 
-    char* cwdPtr = getcwd(nullptr, 0);
-    if (!cwdPtr) {
-        cerr << "Error: Unable to get current directory: " << strerror(errno) << endl;
+    char* currentDirPtr = getcwd(nullptr, 0);
+    if (!currentDirPtr) {
+        cerr << "Unable to get current directory: " << strerror(errno) << endl;
         return 1;
     }
-    string currentDir(cwdPtr);
-    free(cwdPtr);
+    string currentDirectory(currentDirPtr);
+    free(currentDirPtr);
 
     AccessController currentACL;
-    bool aclLoaded = currentACL.read_from_file(currentDir);
+    bool aclLoaded = currentACL.read_from_file(currentDirectory);
 
     if (!aclLoaded) {
-        uid_t currentOwner = Funs::getFileOwnerUID(currentDir);
+        uid_t currentOwner = Funs::getFileOwnerUID(currentDirectory);
         if (getuid() != currentOwner) {
-            cerr << "Error: You are not the owner of the current directory." << endl;
+            cerr << "You are not the owner of the directory." << endl;
             return 1;
         }
         currentACL.define_owner(getuid());
         currentACL.grant_access(getuid(), 7);
-        if (!currentACL.write_to_file(currentDir)) {
-            cerr << "Error: Failed to save default ACL for the current directory." << endl;
+        if (!currentACL.write_to_file(currentDirectory)) {
+            cerr << "Failed to save default ACL for current directory." << endl;
             return 1;
         }
     } else {
         if (!currentACL.has_permission(getuid(), 2)) {
-            cerr << "Error: You do not have write permission in the current directory." << endl;
+            cerr << "You do not have the required write permission." << endl;
             return 1;
         }
         if (seteuid(currentACL.current_owner()) < 0) {
-            cerr << "Error: Could not change effective UID: " << strerror(errno) << endl;
+            cerr << "Failed to change effective UID: " << strerror(errno) << endl;
             return 1;
         }
     }
     
-    if (!createDirectoryAndSaveACL(newDir)) {
-        cerr << "Error: Failed to create directory " << newDir << endl;
+    if (!createDirAndSaveACL(newDirectory)) {
+        cerr << "Failed to create directory " << newDirectory << endl;
         return 1;
     }
     
     if (seteuid(getuid()) < 0) {
-        cerr << "Error: Could not revert effective UID: " << strerror(errno) << endl;
+        cerr << "Failed to revert EUID: " << strerror(errno) << endl;
         return 1;
     }
     

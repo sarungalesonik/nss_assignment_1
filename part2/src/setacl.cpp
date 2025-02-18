@@ -9,44 +9,43 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
     if (argc != 4) {
-        cerr << "Usage: setacl <file> <user> <permissions>" << endl;
-        cerr << "Example: setacl myfile.txt alice rwx" << endl;
+        cerr << "Usage: setacl <file_path> <user_name> <permissions>" << endl;
         return 1;
     }
 
     string filePath = argv[1];
     string userName = argv[2];
-    string rightsStr = argv[3];
+    string permissions = argv[3];
 
-    struct stat fileStat;
-    if (stat(filePath.c_str(), &fileStat) != 0) {
-        cerr << "Error: File not found" << endl;
+    struct stat fileStats;
+    if (stat(filePath.c_str(), &fileStats) != 0) {
+        cerr << "Error: Unable to find the specified file" << endl;
         return 1;
     }
-    if (getuid() != fileStat.st_uid) {
-        cerr << "Error: Only file owner can modify ACL" << endl;
-        return 1;
-    }
-
-    AccessController acl;
-    if (!acl.read_from_file(filePath)) {
-        acl.define_owner(fileStat.st_uid);
-    }
-
-    uid_t targetUid = AccessController::user_to_id(userName);
-    if (targetUid == static_cast<uid_t>(-1)) {
-        cerr << "Error: Invalid user" << endl;
+    if (getuid() != fileStats.st_uid) {
+        cerr << "Error: Only the file owner is permitted to modify the ACL" << endl;
         return 1;
     }
 
-    int rights = AccessController::decode_permissions(rightsStr);
-    acl.grant_access(targetUid, rights);
+    AccessController aclController;
+    if (!aclController.read_from_file(filePath)) {
+        aclController.define_owner(fileStats.st_uid);
+    }
 
-    if (!acl.write_to_file(filePath)) {
-        cerr << "Error: Failed to save ACL" << endl;
+    uid_t targetUserId = AccessController::user_to_id(userName);
+    if (targetUserId == static_cast<uid_t>(-1)) {
+        cerr << "Error: User not found" << endl;
         return 1;
     }
 
-    cout << "ACL updated successfully" << endl;
+    int permissionFlags = AccessController::decode_permissions(permissions);
+    aclController.grant_access(targetUserId, permissionFlags);
+
+    if (!aclController.write_to_file(filePath)) {
+        cerr << "Error: Failed to save updated ACL" << endl;
+        return 1;
+    }
+
+    cout << "Access control list updated successfully for " << filePath << endl;
     return 0;
 }

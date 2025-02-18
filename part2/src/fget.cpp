@@ -15,41 +15,43 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    string filePath = argv[1];
-    filesystem::path absPath = filesystem::absolute(filePath);
+    string targetPath = argv[1];
+    filesystem::path absolutePath = filesystem::absolute(targetPath);
 
-    if (!filesystem::exists(absPath) ||
-       (!filesystem::is_regular_file(absPath) && !filesystem::is_directory(absPath))) {
-        cerr << "Error: " << absPath.string() << " is not a valid file or directory" << endl;
+    if (!filesystem::exists(absolutePath) ||
+       (!filesystem::is_regular_file(absolutePath) && !filesystem::is_directory(absolutePath))) {
+        cerr << "Invalid path: " << absolutePath.string() << " is neither a file nor a directory" << endl;
         return 1;
     }
 
-    if (seteuid(Funs::getFileOwnerUID(filePath)) < 0) {
-        cerr << "Error: Could not change to owner of " << filePath << endl;
+    uid_t fileOwnerUID = Funs::getFileOwnerUID(targetPath);
+    if (seteuid(fileOwnerUID) < 0) {
+        cerr << "Unable to switch to the owner of: " << targetPath << endl;
         return 1;
     }
 
-    AccessController ac;
-    if (!ac.read_from_file(filePath)) {
-        cerr << "Error: ACL not found for " << filePath << endl;
+    AccessController aclController;
+    if (!aclController.read_from_file(targetPath)) {
+        cerr << "ACL not found for: " << targetPath << endl;
         return 1;
     }
 
-    if (!ac.has_permission(getuid(), 4)) {
-        cerr << "Error: You do not have read permissions for " << filePath << endl;
+    if (!aclController.has_permission(getuid(), 4)) {
+        cerr << "You do not have read permission for: " << targetPath << endl;
         return 1;
     }
 
-    ifstream inFile(filePath);
-    string line;
-    while (getline(inFile, line)) {
-        cout << line << endl;
+    ifstream fileStream(targetPath);
+    string fileLine;
+    while (getline(fileStream, fileLine)) {
+        cout << fileLine << endl;
     }
-    inFile.close();
+    fileStream.close();
 
     if (seteuid(getuid()) < 0) {
-        cerr << "Error: Could not change back to original user" << endl;
+        cerr << "Unable to revert to original user" << endl;
         return 1;
     }
+
     return 0;
 }

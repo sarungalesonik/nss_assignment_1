@@ -1,72 +1,75 @@
-CC = clang++
-CFLAGS = -std=c++17 -I./src -I/usr/local/include
-LIBS = -L/usr/local/lib -lboost_serialization -lboost_system
+CXX = c++
+CLANG = clang++
+CXXFLAGS = -I./src -I/usr/local/include
+STD = -std=c++17
+BOOSTLIBS = -L/usr/local/lib -lboost_serialization -lboost_system
 
-SRC_DIR = src
-BIN_DIR = bin
-OBJ_DIR = obj
+# Directories
+OBJDIR = obj
+BINDIR = bin
 
-# Source files
-GETACL_SRC = $(SRC_DIR)/getacl.cpp $(SRC_DIR)/helper.cpp $(SRC_DIR)/acl.cpp
-SETACL_SRC = $(SRC_DIR)/setacl.cpp $(SRC_DIR)/helper.cpp $(SRC_DIR)/acl.cpp
-FGET_SRC = $(SRC_DIR)/fget.cpp $(SRC_DIR)/helper.cpp $(SRC_DIR)/acl.cpp
-FPUT_SRC = $(SRC_DIR)/fput.cpp $(SRC_DIR)/helper.cpp $(SRC_DIR)/acl.cpp
-MY_CD_SRC = $(SRC_DIR)/my_cd.cpp $(SRC_DIR)/helper.cpp $(SRC_DIR)/acl.cpp
-MY_LS_SRC = $(SRC_DIR)/my_ls.cpp $(SRC_DIR)/helper.cpp $(SRC_DIR)/acl.cpp
-CREATE_DIR_SRC = $(SRC_DIR)/create_dir.cpp $(SRC_DIR)/helper.cpp $(SRC_DIR)/acl.cpp
+# Default target: build everything in sequence
+all: directories ACLShell bin/fget bin/create_dir bin/fput bin/my_cd bin/my_ls bin/setacl bin/getacl
 
-# Object files (stored in obj directory)
-GETACL_OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(GETACL_SRC))
-SETACL_OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SETACL_SRC))
-FGET_OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(FGET_SRC))
-FPUT_OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(FPUT_SRC))
-MY_CD_OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(MY_CD_SRC))
-MY_LS_OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(MY_LS_SRC))
-CREATE_DIR_OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(CREATE_DIR_SRC))
+# Create directories if they do not exist
+directories:
+        @mkdir -p $(OBJDIR) $(BINDIR)
 
-# Output binary names
-GETACL_BIN = $(BIN_DIR)/getacl
-SETACL_BIN = $(BIN_DIR)/setacl
-FGET_BIN = $(BIN_DIR)/fget
-FPUT_BIN = $(BIN_DIR)/fput
-MY_CD_BIN = $(BIN_DIR)/my_cd
-MY_LS_BIN = $(BIN_DIR)/my_ls
-CREATE_DIR_BIN = $(BIN_DIR)/create_dir
-ACLSHELL_BIN = ACLShell
+# 1. Build ACLShell
+ACLShell: src/ACLShell.cpp
+        $(CXX) -o ACLShell src/ACLShell.cpp
 
-# Default target: Build all executables
-all: $(GETACL_BIN) $(SETACL_BIN) $(FGET_BIN) $(FPUT_BIN) $(MY_CD_BIN) $(MY_LS_BIN) $(CREATE_DIR_BIN) $(ACLSHELL_BIN)
+# 2. Compile object files in order
+$(OBJDIR)/funs.o: src/funs.cpp
+        $(CXX) $(CXXFLAGS) -c src/funs.cpp -o $(OBJDIR)/funs.o
 
-# Rules to create executables
-$(GETACL_BIN): $(GETACL_OBJ)
-	$(CC) $(CFLAGS) -o $(GETACL_BIN) $(GETACL_OBJ) $(LIBS)
+$(OBJDIR)/access_controller.o: src/access_controller.cpp
+        $(CXX) $(CXXFLAGS) -c src/access_controller.cpp -o $(OBJDIR)/access_controller.o
 
-$(SETACL_BIN): $(SETACL_OBJ)
-	$(CC) $(CFLAGS) -o $(SETACL_BIN) $(SETACL_OBJ) $(LIBS)
+$(OBJDIR)/fget.o: src/fget.cpp
+        $(CXX) $(CXXFLAGS) -c src/fget.cpp -o $(OBJDIR)/fget.o
 
-$(FGET_BIN): $(FGET_OBJ)
-	$(CC) $(CFLAGS) -o $(FGET_BIN) $(FGET_OBJ) $(LIBS)
+$(OBJDIR)/create_dir.o: src/create_dir.cpp
+        $(CXX) $(CXXFLAGS) -c src/create_dir.cpp -o $(OBJDIR)/create_dir.o
 
-$(FPUT_BIN): $(FPUT_OBJ)
-	$(CC) $(CFLAGS) -o $(FPUT_BIN) $(FPUT_OBJ) $(LIBS)
+$(OBJDIR)/fput.o: src/fput.cpp
+        $(CXX) $(CXXFLAGS) -c src/fput.cpp -o $(OBJDIR)/fput.o
 
-$(MY_CD_BIN): $(MY_CD_OBJ)
-	$(CC) $(CFLAGS) -o $(MY_CD_BIN) $(MY_CD_OBJ) $(LIBS)
+$(OBJDIR)/my_cd.o: src/my_cd.cpp
+        $(CXX) $(CXXFLAGS) -c src/my_cd.cpp -o $(OBJDIR)/my_cd.o
 
-$(MY_LS_BIN): $(MY_LS_OBJ)
-	$(CC) $(CFLAGS) -o $(MY_LS_BIN) $(MY_LS_OBJ) $(LIBS)
+$(OBJDIR)/my_ls.o: src/my_ls.cpp
+        $(CXX) $(CXXFLAGS) -c src/my_ls.cpp -o $(OBJDIR)/my_ls.o
 
-$(CREATE_DIR_BIN): $(CREATE_DIR_OBJ)
-	$(CC) $(CFLAGS) -o $(CREATE_DIR_BIN) $(CREATE_DIR_OBJ) $(LIBS)
+$(OBJDIR)/setacl.o: src/setacl.cpp
+        $(CXX) $(CXXFLAGS) -c src/setacl.cpp -o $(OBJDIR)/setacl.o
 
-$(ACLSHELL_BIN): $(SRC_DIR)/ACLShell.cpp
-	c++ -o $(ACLSHELL_BIN) $(SRC_DIR)/ACLShell.cpp
+$(OBJDIR)/getacl.o: src/getacl.cpp
+        $(CXX) $(CXXFLAGS) -c src/getacl.cpp -o $(OBJDIR)/getacl.o
 
-# Rule to compile .cpp to .o (store objects in obj directory)
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(OBJ_DIR)  # Ensure obj directory exists
-	$(CC) $(CFLAGS) -c $< -o $@
+# 3. Link binaries with clang++ using C++17
+bin/fget: $(OBJDIR)/fget.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o
+        $(CLANG) $(STD) $(CXXFLAGS) -o $@ $(OBJDIR)/fget.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o $(BOOSTLIBS)
 
-# Clean all generated files
+bin/create_dir: $(OBJDIR)/create_dir.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o
+        $(CLANG) $(STD) $(CXXFLAGS) -o $@ $(OBJDIR)/create_dir.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o $(BOOSTLIBS)
+
+bin/fput: $(OBJDIR)/fput.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o
+        $(CLANG) $(STD) $(CXXFLAGS) -o $@ $(OBJDIR)/fput.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o $(BOOSTLIBS)
+
+bin/my_cd: $(OBJDIR)/my_cd.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o
+        $(CLANG) $(STD) $(CXXFLAGS) -o $@ $(OBJDIR)/my_cd.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o $(BOOSTLIBS)
+
+bin/my_ls: $(OBJDIR)/my_ls.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o
+        $(CLANG) $(STD) $(CXXFLAGS) -o $@ $(OBJDIR)/my_ls.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o $(BOOSTLIBS)
+
+bin/setacl: $(OBJDIR)/setacl.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o
+        $(CLANG) $(STD) $(CXXFLAGS) -o $@ $(OBJDIR)/setacl.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o $(BOOSTLIBS)
+
+bin/getacl: $(OBJDIR)/getacl.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o
+        $(CLANG) $(STD) $(CXXFLAGS) -o $@ $(OBJDIR)/getacl.o $(OBJDIR)/funs.o $(OBJDIR)/access_controller.o $(BOOSTLIBS)
+
+# Clean target to remove generated files
 clean:
-	rm -rf $(OBJ_DIR)/*.o $(BIN_DIR)/* $(ACLSHELL_BIN)
+        rm -f ACLShell
+        rm -rf $(OBJDIR) $(BINDIR)

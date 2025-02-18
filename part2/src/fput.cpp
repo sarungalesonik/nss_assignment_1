@@ -17,58 +17,58 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    string filePath = argv[1];
-    string text = argv[2];
-    filesystem::path absPath = filesystem::absolute(filePath);
+    string targetFilePath = argv[1];
+    string textToWrite = argv[2];
+    filesystem::path absoluteFilePath = filesystem::absolute(targetFilePath);
 
-    if (!filesystem::exists(absPath)) {
-        cerr << "Error: " << absPath.string() << " does not exist" << endl;
+    if (!filesystem::exists(absoluteFilePath)) {
+        cerr << "Invalid path: " << absoluteFilePath.string() << " does not exist" << endl;
         return 1;
     }
 
-    uid_t fileOwner = Funs::getFileOwnerUID(filePath);
-    if (seteuid(fileOwner) < 0) {
-        cerr << "Error: Could not switch to owner of " << filePath << endl;
+    uid_t fileOwnerUID = Funs::getFileOwnerUID(targetFilePath);
+    if (seteuid(fileOwnerUID) < 0) {
+        cerr << "Unable to switch to the owner of " << targetFilePath << endl;
         return 1;
     }
 
-    AccessController ac;
-    if (!ac.read_from_file(filePath)) {
-        if (getuid() != fileOwner) {
-            cerr << "Error: Permission denied for " << filePath << endl;
+    AccessController aclController;
+    if (!aclController.read_from_file(targetFilePath)) {
+        if (getuid() != fileOwnerUID) {
+            cerr << "Permission denied for: " << targetFilePath << endl;
             return 1;
         }
-        ac.define_owner(getuid());
-        ac.grant_access(getuid(), 7);
-        if (!ac.write_to_file(filePath)) {
-            cerr << "Error: Could not save ACL for " << filePath << endl;
+        aclController.define_owner(getuid());
+        aclController.grant_access(getuid(), 7);
+        if (!aclController.write_to_file(targetFilePath)) {
+            cerr << "Failed to save ACL for: " << targetFilePath << endl;
             return 1;
         }
     } else {
-        if (!ac.has_permission(getuid(), 2)) {
-            cerr << "Error: Write permission denied for " << filePath << endl;
+        if (!aclController.has_permission(getuid(), 2)) {
+            cerr << "Write permission denied for: " << targetFilePath << endl;
             return 1;
         }
     }
 
-    ofstream outFile(filePath, ios::app);
-    if (!outFile) {
-        cerr << "Error: Unable to open " << filePath << " for writing" << endl;
+    ofstream fileStream(targetFilePath, ios::app);
+    if (!fileStream) {
+        cerr << "Unable to open " << targetFilePath << " for writing" << endl;
         return 1;
     }
 
-    outFile << text << endl;
-    if (outFile.fail() || outFile.bad()) {
-        cerr << "Error: Failed to write to " << filePath << endl;
+    fileStream << textToWrite << endl;
+    if (fileStream.fail() || fileStream.bad()) {
+        cerr << "Failed to write to: " << targetFilePath << endl;
         return 1;
     }
-    outFile.close();
+    fileStream.close();
 
     if (seteuid(getuid()) < 0) {
-        cerr << "Error: Could not revert to original user" << endl;
+        cerr << "Unable to revert to original user" << endl;
         return 1;
     }
 
-    cout << "Successfully wrote to " << filePath << endl;
+    cout << "Successfully wrote to: " << targetFilePath << endl;
     return 0;
 }
