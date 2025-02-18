@@ -1,10 +1,10 @@
 # nss_assignment_1# Access Control Lists
 
 ## Description of System
-- *ACL-Based Access Control* 
+- **ACL-Based Access Control** 
    - The ACLShell operates in a restricted environment where each file and directory has an ACL stored in extended attributes. ACLs specify user permissions (read, write, execute) and are enforced at the shell level before executing any command.
 
-- * SetUID-Enabled Commands*
+- **SetUID-Enabled Commands**
    - Custom commands (fput, my_ls, fget, my_cd, create_dir, setacl, getacl) are implemented as individual binaries with the setuid bit enabled. These commands check user permissions using getuid(), verify ACLs, and enforce discretionary access control (DAC) if ACLs deny access.
 
 ## Assumptions
