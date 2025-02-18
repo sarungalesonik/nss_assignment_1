@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+
     if (stat(path_buf, &sb) != 0) exit_with_error("stat failed");
 
     if (!S_ISREG(sb.st_mode)) {
@@ -61,13 +62,20 @@ int main(int argc, char *argv[]) {
     uid_t owner_uid = sb.st_uid;
 
     // Changing the user id to the owner of the executable
-    if (seteuid(owner_uid) != 0) exit_with_error("seteuid to owner failed");
+    if (setuid(owner_uid) != 0) {
+        cerr << "setuid failed: " << strerror(errno) << endl;
+        return EXIT_FAILURE;
+    }
 
     // Executing the command
     execv(path_buf, args);
 
     // Changing the user id back to the original user if execv fails
-    if (seteuid(orig_uid) != 0) exit_with_error("failed to revert effective UID");
+    if (seteuid(current_user) != 0) {
+        cerr << "seteuid failed: " << strerror(errno) << endl;
+        return EXIT_FAILURE;
+    }
 
-    exit_with_error("execv failed");
+    cerr << "execv failed: " << strerror(errno) << endl;
+    return EXIT_FAILURE;
 }
